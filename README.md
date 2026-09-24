@@ -1,32 +1,19 @@
-# React + TypeScript + Vite
+# Meal Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Plan your week's meals, manage a recipe library, and get an auto-generated grocery list.
 
-Currently, two official plugins are available:
+- **Recipes**: search, filter by tag/meal type, add/edit/delete
+- **Week plan**: 7 days × breakfast/lunch/dinner, per-slot servings, one-click auto-fill
+- **Grocery list**: ingredients scaled by servings, merged across recipes with unit conversion, grouped by aisle, check-off and copy-as-text
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Everything runs in the browser; data is stored in `localStorage`.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## Development
+```bash
+npm install
+npm run dev      # start dev server
+npm test         # run unit + component tests
+npm run build    # production build to dist/
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+See [DESIGN.md](DESIGN.md) for architecture and module ownership. **CI/deploy:** move `docs/deploy.yml` to `.github/workflows/deploy.yml` to run tests on every push and deploy to GitHub Pages (Settings → Pages → Source: GitHub Actions).

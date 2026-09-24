@@ -1,122 +1,88 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useMemo, useState } from 'react'
+import { useAppState } from './state/useAppState'
+import { buildGroceryList } from './domain/grocery'
+import { DAYS, MEAL_TYPES } from './domain/types'
+import { RecipeLibrary } from './components/RecipeLibrary'
+import { WeekPlanner } from './components/PlannerWeek'
+import { GroceryList } from './components/GroceryList'
 
-function App() {
-  const [count, setCount] = useState(0)
+type Tab = 'plan' | 'recipes' | 'grocery'
+
+export default function App() {
+  const app = useAppState()
+  const { state } = app
+  const [tab, setTab] = useState<Tab>('plan')
+  const [confirmReset, setConfirmReset] = useState(false)
+
+  const groceryItems = useMemo(
+    () => buildGroceryList(state.plan, state.recipes),
+    [state.plan, state.recipes],
+  )
+  const plannedCount = DAYS.reduce(
+    (n, d) => n + MEAL_TYPES.filter((m) => state.plan[d]?.[m]).length, 0,
+  )
+  const remaining = groceryItems.filter((i) => !state.checkedGroceryKeys.includes(i.key)).length
+
+  const tabs: { id: Tab; label: string; badge?: number }[] = [
+    { id: 'plan', label: 'Week plan', badge: plannedCount },
+    { id: 'recipes', label: 'Recipes', badge: state.recipes.length },
+    { id: 'grocery', label: 'Grocery list', badge: remaining },
+  ]
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+      <header className="app-header">
+        <div className="app-header-inner">
+          <h1 className="app-title">🥕 Meal Planner</h1>
+          <nav className="app-tabs" role="tablist" aria-label="Sections">
+            {tabs.map((t) => (
+              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>
+                {t.label}
+                {t.badge !== undefined && <span className="badge">{t.badge}</span>}
+              </button>
+            ))}
+          </nav>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      </header>
+      <main>
+        {tab === 'plan' && (
+          <WeekPlanner
+            plan={state.plan}
+            recipes={state.recipes}
+            onSetMeal={app.setMeal}
+            onAutoFill={app.autoFill}
+            onClear={app.clearPlan}
+          />
+        )}
+        {tab === 'recipes' && (
+          <RecipeLibrary
+            recipes={state.recipes}
+            onAdd={app.addRecipe}
+            onUpdate={app.updateRecipe}
+            onDelete={app.deleteRecipe}
+          />
+        )}
+        {tab === 'grocery' && (
+          <GroceryList
+            items={groceryItems}
+            checkedKeys={state.checkedGroceryKeys}
+            onToggle={app.toggleGroceryItem}
+            onClearChecked={app.clearChecked}
+          />
+        )}
+      </main>
+      <footer className="app-footer">
+        <span>Data is saved in this browser.</span>
+        {confirmReset ? (
+          <>
+            <span>Reset all recipes and plans?</span>
+            <button className="link-button danger" onClick={() => { app.resetAll(); setConfirmReset(false) }}>Yes, reset</button>
+            <button className="link-button" onClick={() => setConfirmReset(false)}>Cancel</button>
+          </>
+        ) : (
+          <button className="link-button" onClick={() => setConfirmReset(true)}>Reset to sample data</button>
+        )}
+      </footer>
     </>
   )
 }
-
-export default App
