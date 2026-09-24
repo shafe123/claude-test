@@ -16,4 +16,4 @@ npm test         # run unit + component tests
 npm run build    # production build to dist/
 ```
 
-See [DESIGN.md](DESIGN.md) for architecture and module ownership. **CI/deploy:** move `docs/deploy.yml` to `.github/workflows/deploy.yml` to run tests on every push and deploy to GitHub Pages (Settings → Pages → Source: GitHub Actions).
+See [DESIGN.md](DESIGN.md) for architecture and module ownership. **CI/deploy:** every push runs tests; pushes to `main` deploy to GitHub Pages (Settings → Pages → Source: GitHub Actions).
