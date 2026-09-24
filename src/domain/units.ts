@@ -71,3 +71,41 @@ export function formatQuantity(q: number, u: Unit): string {
   const label = plural && Number(num) !== 1 ? plural : u;
   return `${num} ${label}`;
 }
+
+const FRACTIONS: [number, string][] = [
+  [0, ''], [1 / 4, '¼'], [1 / 3, '⅓'], [1 / 2, '½'], [2 / 3, '⅔'], [3 / 4, '¾'], [1, ''],
+];
+
+/**
+ * Round `n` to the nearest allowed fraction (at least the smallest one) and render it:
+ * 1.5 -> "1½". `allowed` lists the fractional parts permitted, e.g. [0, ½, 1].
+ */
+function kitchenNumber(n: number, allowed: number[]): { text: string; value: number } {
+  let whole = Math.floor(n);
+  const choices = FRACTIONS.filter(([f]) => allowed.includes(f));
+  let [frac, glyph] = choices.reduce((best, c) =>
+    Math.abs(n - whole - c[0]) < Math.abs(n - whole - best[0]) ? c : best);
+  if (frac === 1) { whole += 1; frac = 0; glyph = ''; }
+  if (whole === 0 && frac === 0) [frac, glyph] = choices[1]; // never show "0"
+  return { text: whole === 0 ? glyph : `${whole}${glyph}`, value: whole + frac };
+}
+
+const QUARTERS = [0, 1 / 4, 1 / 2, 3 / 4, 1];
+const HALVES = [0, 1 / 2, 1];
+const CUP_FRACTIONS = [0, 1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4, 1];
+
+/**
+ * Format a merged grocery quantity. Grocery items carry base units (ml/g), so small
+ * volumes are shown in kitchen measures instead of odd metric values
+ * (14.8 ml -> "1 tbsp", 177 ml -> "¾ cup"); 500 ml and up stays metric.
+ * Amounts are rounded before picking the unit, so 2.9 tsp becomes "1 tbsp", not "3 tsp".
+ */
+export function formatGroceryQuantity(q: number, u: Unit): string {
+  if (u !== 'ml' || !Number.isFinite(q) || q <= 0 || q >= 500) return formatQuantity(q, u);
+  const tsp = kitchenNumber(q / TO_ML.tsp!, QUARTERS);
+  if (tsp.value < 3) return `${tsp.text} tsp`;
+  const tbsp = kitchenNumber(q / TO_ML.tbsp!, HALVES);
+  if (tbsp.value < 4) return `${tbsp.text} tbsp`;
+  const cups = kitchenNumber(q / TO_ML.cup!, CUP_FRACTIONS);
+  return `${cups.text} ${cups.value > 1 ? 'cups' : 'cup'}`;
+}
