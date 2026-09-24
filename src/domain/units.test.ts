@@ -90,6 +90,25 @@ describe('formatGroceryQuantity', () => {
     expect(formatGroceryQuantity(ml(2, 'cup'), 'ml')).toBe('2 cups');
     expect(formatGroceryQuantity(ml(1.5, 'cup'), 'ml')).toBe('1½ cups');
   });
+  it('promotes to the next unit when rounding reaches its boundary', () => {
+    expect(formatGroceryQuantity(ml(2.9, 'tsp'), 'ml')).toBe('1 tbsp');
+    expect(formatGroceryQuantity(14.18, 'ml')).toBe('1 tbsp');
+    expect(formatGroceryQuantity(ml(3.75, 'tbsp'), 'ml')).toBe('¼ cup');
+    expect(formatGroceryQuantity(56, 'ml')).toBe('¼ cup');
+    expect(formatGroceryQuantity(ml(0.99, 'cup'), 'ml')).toBe('1 cup');
+  });
+  it('supports thirds of a cup', () => {
+    expect(formatGroceryQuantity(ml(1 / 3, 'cup'), 'ml')).toBe('⅓ cup');
+    expect(formatGroceryQuantity(ml(5, 'tbsp'), 'ml')).toBe('⅓ cup');
+    expect(formatGroceryQuantity(ml(2 / 3, 'cup'), 'ml')).toBe('⅔ cup');
+    expect(formatGroceryQuantity(ml(4 / 3, 'cup'), 'ml')).toBe('1⅓ cups');
+  });
+  it('never shows zero or an unpromoted boundary amount (0.01–500 ml sweep)', () => {
+    for (let q = 0.01; q < 500; q += 0.01) {
+      const out = formatGroceryQuantity(q, 'ml');
+      expect(out).not.toMatch(/^0|^3 tsp$|^4 tbsp$/);
+    }
+  });
   it('keeps 500 ml and up metric', () => {
     expect(formatGroceryQuantity(500, 'ml')).toBe('500 ml');
     expect(formatGroceryQuantity(1250, 'ml')).toBe('1.25 l');
