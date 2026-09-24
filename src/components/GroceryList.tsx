@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { GroceryCategory, GroceryItem } from '../domain/types';
-import { formatQuantity } from '../domain/units';
+import { formatGroceryQuantity } from '../domain/units';
 import './planner.css';
 
 export interface GroceryListProps {
@@ -49,7 +49,7 @@ export function groceryListToText(items: GroceryItem[], checkedKeys: string[]): 
   for (const [cat, list] of groupByCategory(items)) {
     lines.push('', `${CATEGORY_LABELS[cat]}:`);
     for (const item of list) {
-      lines.push(`${checked.has(item.key) ? '[x]' : '[ ]'} ${formatQuantity(item.quantity, item.unit)} ${item.name}`);
+      lines.push(`${checked.has(item.key) ? '[x]' : '[ ]'} ${formatGroceryQuantity(item.quantity, item.unit)} ${item.name}`);
     }
   }
   return lines.join('\n');
@@ -140,7 +140,7 @@ export function GroceryList({ items, checkedKeys, onToggle, onClearChecked }: Gr
             <ul className="grocery-items">
               {list.map((item) => {
                 const isChecked = checked.has(item.key);
-                const qty = formatQuantity(item.quantity, item.unit);
+                const qty = formatGroceryQuantity(item.quantity, item.unit);
                 const usedIn = item.recipeNames.length ? `Used in: ${item.recipeNames.join(', ')}` : '';
                 return (
                   <li key={item.key} className={`grocery-item${isChecked ? ' is-checked' : ''}`}>

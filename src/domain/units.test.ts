@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeQuantity, formatQuantity } from './units';
+import { normalizeQuantity, formatQuantity, formatGroceryQuantity } from './units';
 
 describe('normalizeQuantity', () => {
   it('converts mass to grams', () => {
@@ -65,5 +65,38 @@ describe('formatQuantity', () => {
   it('handles zero and non-finite', () => {
     expect(formatQuantity(0, 'g')).toBe('0 g');
     expect(formatQuantity(NaN, 'g')).toBe('0 g');
+  });
+});
+
+describe('formatGroceryQuantity', () => {
+  const ml = (q: number, u: Parameters<typeof normalizeQuantity>[1]) => normalizeQuantity(q, u).quantity;
+  it('shows small volumes as teaspoons', () => {
+    expect(formatGroceryQuantity(ml(1, 'tsp'), 'ml')).toBe('1 tsp');
+    expect(formatGroceryQuantity(ml(0.5, 'tsp'), 'ml')).toBe('½ tsp');
+    expect(formatGroceryQuantity(ml(2.75, 'tsp'), 'ml')).toBe('2¾ tsp');
+    expect(formatGroceryQuantity(0.3, 'ml')).toBe('¼ tsp');
+  });
+  it('shows medium volumes as tablespoons', () => {
+    expect(formatGroceryQuantity(ml(1, 'tbsp'), 'ml')).toBe('1 tbsp');
+    expect(formatGroceryQuantity(ml(3, 'tsp'), 'ml')).toBe('1 tbsp');
+    expect(formatGroceryQuantity(ml(1.5, 'tbsp'), 'ml')).toBe('1½ tbsp');
+    expect(formatGroceryQuantity(ml(1, 'tbsp') + ml(1, 'tsp'), 'ml')).toBe('1½ tbsp');
+  });
+  it('shows larger volumes as cups', () => {
+    expect(formatGroceryQuantity(ml(0.25, 'cup'), 'ml')).toBe('¼ cup');
+    expect(formatGroceryQuantity(ml(4, 'tbsp'), 'ml')).toBe('¼ cup');
+    expect(formatGroceryQuantity(ml(0.75, 'cup'), 'ml')).toBe('¾ cup');
+    expect(formatGroceryQuantity(ml(1, 'cup'), 'ml')).toBe('1 cup');
+    expect(formatGroceryQuantity(ml(2, 'cup'), 'ml')).toBe('2 cups');
+    expect(formatGroceryQuantity(ml(1.5, 'cup'), 'ml')).toBe('1½ cups');
+  });
+  it('keeps 500 ml and up metric', () => {
+    expect(formatGroceryQuantity(500, 'ml')).toBe('500 ml');
+    expect(formatGroceryQuantity(1250, 'ml')).toBe('1.25 l');
+  });
+  it('leaves non-volume units to formatQuantity', () => {
+    expect(formatGroceryQuantity(1500, 'g')).toBe('1.5 kg');
+    expect(formatGroceryQuantity(2, 'clove')).toBe('2 cloves');
+    expect(formatGroceryQuantity(0, 'ml')).toBe('0 ml');
   });
 });

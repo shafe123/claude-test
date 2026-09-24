@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within, waitFor } from '@testing-library/rea
 import type { GroceryItem } from '../domain/types';
 
 vi.mock('../domain/units', () => ({
-  formatQuantity: (q: number, u: string) => `${q} ${u}`,
+  formatGroceryQuantity: (q: number, u: string) => `${q} ${u}`,
 }));
 
 import { GroceryList, groupByCategory, groceryListToText } from './GroceryList';

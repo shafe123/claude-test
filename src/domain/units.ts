@@ -71,3 +71,29 @@ export function formatQuantity(q: number, u: Unit): string {
   const label = plural && Number(num) !== 1 ? plural : u;
   return `${num} ${label}`;
 }
+
+const FRACTIONS: Record<number, string> = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+
+/** Round to the nearest `step` (at least one step) and render quarters as fractions: 1.5 -> "1½". */
+function kitchenNumber(n: number, step: number): { text: string; value: number } {
+  const value = Math.max(step, Math.round(n / step) * step);
+  const whole = Math.floor(value);
+  const frac = FRACTIONS[roundTo(value - whole, 2)] ?? '';
+  return { text: whole === 0 && frac ? frac : `${whole}${frac}`, value };
+}
+
+/**
+ * Format a merged grocery quantity. Grocery items carry base units (ml/g), so small
+ * volumes are shown in kitchen measures instead of odd metric values
+ * (14.8 ml -> "1 tbsp", 177 ml -> "¾ cup"); 500 ml and up stays metric.
+ */
+export function formatGroceryQuantity(q: number, u: Unit): string {
+  if (u !== 'ml' || !Number.isFinite(q) || q <= 0 || q >= 500) return formatQuantity(q, u);
+  const tsp = TO_ML.tsp!;
+  const tbsp = TO_ML.tbsp!;
+  const cup = TO_ML.cup!;
+  if (q < tbsp - 0.25) return `${kitchenNumber(q / tsp, 0.25).text} tsp`;
+  if (q < cup / 4 - 0.5) return `${kitchenNumber(q / tbsp, 0.5).text} tbsp`;
+  const cups = kitchenNumber(q / cup, 0.25);
+  return `${cups.text} ${cups.value > 1 ? 'cups' : 'cup'}`;
+}
